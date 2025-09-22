@@ -1,0 +1,32 @@
+Formats de fichiers acceptés
+CSV: délimiteur auto (virgule/point-virgule), encodage UTF-8 (BOM OK).
+Excel (.xlsx): nécessite l’un des packages ci-dessus.
+Gabarits CSV par entité (colonnes attendues)
+Clients:
+name, code
+Chèques:
+code_banque, numero, montant, echeance?, statut?, contre_bon_numero?
+client_code|client_name, company_id|company, livreur_id|livreur|livreur_email
+Bons de recouvrement:
+numero, date_recouvrement|date, montant, type?, note?, contre_bon_numero?
+client_code|client_name, company_id|company, livreur_id|livreur|livreur_email
+Contre-bons:
+numero, date, montant?, nombre_bons?, note?
+company_id|company, livreur_id|livreur|livreur_email
+Dépenses:
+cash_id|cash_name, date, numero, libelle|label, montant, note?
+Transferts:
+numero, from_cash_id|from_cash_name, to_cash_id|to_cash_name, montant, note?
+Mouvements:
+cash_id|cash_name, type(recette|depense|transfert_debit|transfert_credit|ajustement), montant, date_mvt|date, description?, source_type?, source_id?
+Règles appliquées
+Déduplication: insertion uniquement (ignore si doublon) selon des clés naturelles:
+Clients: code sinon name
+Chèques: (code_banque, numero)
+RecouvrementBon: numero
+ContreBon: numero
+Dépenses: (cash_id, numero)
+Transferts: numero
+Mouvements: (cash_id, type, montant, date_mvt, source_type, source_id)
+Dates acceptées: Y-m-d, d/m/Y, d-m-Y.
+Montants: support virgule/dot, espaces.

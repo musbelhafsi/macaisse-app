@@ -1,0 +1,17 @@
+[90m= [39m[34;4mApp\Models\Import[39;24m {#6523
+    [34mid[39m: [35m5[39m,
+    [34mentity[39m: "[32mcheques[39m",
+    [34mstatus[39m: "[32mpending[39m",
+    [34mtotal_rows[39m: [35m0[39m,
+    [34mprocessed_rows[39m: [35m0[39m,
+    [34msuccess_count[39m: [35m0[39m,
+    [34merror_count[39m: [35m0[39m,
+    [34merrors[39m: [36mnull[39m,
+    [34mfile_path[39m: "[32m/home/ghaith/Bureau/ImportCheques.csv[39m",
+    [34mcreated_by[39m: [35m1[39m,
+    [34mstarted_at[39m: [36mnull[39m,
+    [34mfinished_at[39m: [36mnull[39m,
+    [34mcreated_at[39m: "[32m2025-09-21 07:05:29[39m",
+    [34mupdated_at[39m: "[32m2025-09-21 07:05:29[39m",
+  }
+
