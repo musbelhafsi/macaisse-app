@@ -12,4 +12,10 @@ class Transfer extends Model
     protected $fillable = [
         'numero','from_cash_id','to_cash_id','montant','montant_recu','ecart','statut','emitted_at','validated_at','note'
     ];
+    public function fromCash(){
+        return $this->belongsTo('App\Models\CashRegister', 'from_cash_id');
+    }
+    public function toCash(){
+        return $this->belongsTo('App\Models\CashRegister', 'to_cash_id');
+    }
 }

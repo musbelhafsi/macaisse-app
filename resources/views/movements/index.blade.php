@@ -61,7 +61,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                    @php($balance = 0)
+                   {{--  @php($balance = 0) --}}
                     @forelse($items as $m)
                         @php(
                             $isCredit = in_array($m->type, ['recette','transfert_credit']) || ($m->type === 'ajustement' && $m->montant >= 0)
@@ -72,9 +72,17 @@
                         @php(
                             $debit = $isCredit ? 0 : $m->montant
                         )
-                        @php($balance = $balance + $credit - $debit)
-                        <tr>
-                            <td>{{ $m->date_mvt }}</td>
+                        {{-- @php($balance = $balance + $credit - $debit) --}}
+                        <tr class="
+                @switch($m->type)
+                    @case('transfert_debit')  text-red-700 @break
+                    @case('transfert_credit') text-blue-700 @break
+                    @case('depense')          text-yellow-700 @break
+                    @case('recette')          text-green-700 @break
+                    @default                  text-gray-700
+                @endswitch
+                border-b">
+                            <td>{{ $m->date_mvt ? \Carbon\Carbon::parse($m->date_mvt)->format('d/m/Y') : '' }}</td>
                             <td>
                                 @php(
                                     $pieceNumero = null
@@ -100,7 +108,7 @@
                             <td>{{ $m->description }}</td>
                             <td class="text-right">{{ $credit ? number_format($credit,2,',',' ') : '' }}</td>
                             <td class="text-right">{{ $debit ? number_format($debit,2,',',' ') : '' }}</td>
-                            <td class="text-right">{{ number_format($balance,2,',',' ') }}</td>
+                            <td class="text-right">{{ number_format($m->balance,2,',',' ') }}</td>
                            
                         </tr>
                     @empty

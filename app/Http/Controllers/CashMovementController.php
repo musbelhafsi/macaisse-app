@@ -16,8 +16,9 @@ class CashMovementController extends Controller
 
         $query = CashMovement::with('source')
             ->where('cash_id', $cashId)
-            ->orderBy('date_mvt')
-            ->orderBy('id');
+          ->orderBydesc('id')
+            ->orderBy('date_mvt') 
+            ;
 
         if ($r->filled('type')) $query->where('type', $r->type);
         if ($r->filled('from') && $r->filled('to')) $query->whereBetween('date_mvt', [$r->from, $r->to]);

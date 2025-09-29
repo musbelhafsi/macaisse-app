@@ -13,6 +13,7 @@
                     <thead>
                     <tr>
                         <th>#</th>
+                        <th>Date</th>
                         <th>Numéro</th>
                         <th>De</th>
                         <th>Vers</th>
@@ -27,9 +28,10 @@
                     @foreach($transfers as $t)
                         <tr>
                             <td>{{ $t->id }}</td>
+                            <td>{{ $t->created_at->format('d/m/Y') }}</td>
                             <td>{{ $t->numero }}</td>
-                            <td>{{ $t->from_cash_id }}</td>
-                            <td>{{ $t->to_cash_id }}</td>
+                            <td>{{$t->fromCash?->name ?? '—'}}</td>
+                            <td>{{ $t->toCash?->name ?? '—' }}</td>
                             <td>{{ number_format($t->montant, 2, ',', ' ') }}</td>
                             <td>{{ $t->montant_recu ? number_format($t->montant_recu, 2, ',', ' ') : '-' }}</td>
                             <td>{{ number_format($t->ecart, 2, ',', ' ') }}</td>

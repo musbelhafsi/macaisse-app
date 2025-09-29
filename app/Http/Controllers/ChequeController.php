@@ -27,7 +27,7 @@ class ChequeController extends Controller
      */
     private function buildFilteredQuery(Request $request)
     {
-        $query = Cheque::query()->latest();
+        $query = Cheque::query()->latest('date_recouvrement');
 
         // Text filters
         if ($request->filled('code_banque')) {
@@ -125,7 +125,7 @@ class ChequeController extends Controller
             'client_id' => 'required|exists:clients,id',
             'company_id' => 'required|exists:companies,id',
             'livreur_id' => 'required|exists:users,id',
-            'montant' => 'required|numeric|min:0.01',
+            'montant' => 'required|numeric|not_in:0',
             'echeance' => 'nullable|date',
             'date_recouvrement' => 'nullable|date',
         ]);

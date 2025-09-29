@@ -10,6 +10,7 @@ return new class extends Migration {
         Schema::create('cash_movements', function (Blueprint $table) {
             $table->id();
             $table->foreignId('cash_id')->constrained('cash_registers');
+            
             $table->enum('type', ['recette', 'depense', 'transfert_debit', 'transfert_credit', 'ajustement']);
             $table->decimal('montant', 18, 2);
             $table->string('source_type')->nullable(); // morph-like pointer for provenance

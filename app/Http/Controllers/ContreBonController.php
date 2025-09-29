@@ -18,7 +18,7 @@ class ContreBonController extends Controller
 {
     public function index()
     {
-        $contreBons = ContreBon::latest()->paginate(20);
+        $contreBons = ContreBon::latest('date')->paginate(20);
         return view('contre_bons.index', compact('contreBons'));
     }
 

@@ -13,7 +13,7 @@ class ExpenseController extends Controller
 {
     public function index()
     {
-        $expenses = Expense::latest()->paginate(20);
+        $expenses = Expense::orderByDesc('numero')->paginate(20);
         return view('expenses.index', compact('expenses'));
     }
 
