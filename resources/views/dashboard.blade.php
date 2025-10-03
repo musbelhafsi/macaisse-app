@@ -40,22 +40,7 @@
                     </div>
                 </div>
 
-                <!-- KPI période -->
-                <div class="stats shadow">
-                    <div class="stat">
-                        <div class="stat-title">Entrées ({{ $periodFrom }} → {{ $periodTo }})</div>
-                        <div class="stat-value text-success">{{ number_format($totalsIn ?? 0, 2, ',', ' ') }}</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-title">Sorties</div>
-                        <div class="stat-value text-error">{{ number_format($totalsOut ?? 0, 2, ',', ' ') }}</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-title">Flux net</div>
-                        <div class="stat-value {{ ($netFlow ?? 0) >= 0 ? 'text-success' : 'text-error' }}">{{ number_format($netFlow ?? 0, 2, ',', ' ') }}</div>
-                    </div>
-                </div>
-
+                
                 <!-- Caisse courante / Raccourcis -->
                 <div class="card bg-base-100 shadow">
                     <div class="card-body">
@@ -116,6 +101,22 @@
                     <div class="stat-value">{{ $clientsRecouvres ?? 0 }}</div>
                 </div>
             </div>
+            <!-- KPI période -->
+                <div class="mt-6 stats shadow">
+                    <div class="stat">
+                        <div class="stat-title">Entrées ({{ $periodFrom }} → {{ $periodTo }})</div>
+                        <div class="stat-value text-success">{{ number_format($totalsIn ?? 0, 2, ',', ' ') }}</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-title">Sorties</div>
+                        <div class="stat-value text-error">{{ number_format($totalsOut ?? 0, 2, ',', ' ') }}</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-title">Flux net</div>
+                        <div class="stat-value {{ ($netFlow ?? 0) >= 0 ? 'text-success' : 'text-error' }}">{{ number_format($netFlow ?? 0, 2, ',', ' ') }}</div>
+                    </div>
+                </div>
+                <!-- END KPI période -->
 
          <!-- Graphique: flux par jour (période) -->
 <div class="mt-6 card bg-base-100 shadow">

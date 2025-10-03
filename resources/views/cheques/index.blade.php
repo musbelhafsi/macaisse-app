@@ -3,6 +3,18 @@
 @php
     $activeTab = request('tab', 'filters');
 @endphp
+<div class="mb-4">
+        @if (session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="alert alert-error">
+                {{ session('error') }}
+            </div>
+        @endif
+   </div>
 <div class="max-w-7xl mx-auto">
     <div class="flex items-center justify-between mb-4">
         <h3 class="text-xl font-semibold">Chèques (portefeuille)</h3>
@@ -135,7 +147,7 @@
             </div>
 
             <div class="overflow-x-auto">
-                <table class="table table-zebra">
+                <table class="table table-zebra font-mono">
                     <thead>
                     <tr>
                         <th>#</th>

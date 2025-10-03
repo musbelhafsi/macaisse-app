@@ -22,6 +22,14 @@ class CashMovementController extends Controller
 
         if ($r->filled('type')) $query->where('type', $r->type);
         if ($r->filled('from') && $r->filled('to')) $query->whereBetween('date_mvt', [$r->from, $r->to]);
+        if ($r->filled('search')) {
+            $s = strtoupper($r->search);
+            $query->where(function($q) use ($s) {
+                $q->where('description', 'like', "%$s%")
+                  ->orWhere('montant', 'like', "%$s%")
+                  ->orWhere('balance', 'like', "%$s%");
+            });
+        }
 
         $items = $query->paginate(50)->appends($r->query());
         $currentCash = CashRegister::find($cashId);

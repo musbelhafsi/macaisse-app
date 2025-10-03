@@ -2,7 +2,11 @@
 @section('content')
 <div class="max-w-7xl mx-auto space-y-4">
     <div class="flex items-center justify-between">
-        <h3 class="text-xl font-semibold">Brouillard de caisse</h3>
+        {{-- <h3 class="text-lg font-bold mb-4 text-center uppercase tracking-wider">
+        Brouillard de Caisse
+        </h3> --}}
+         @php($u = Auth::user())
+                    <span class="badge badge-outline badge-lg h-auto align-middle" >Brouillard de Caisse: {{ $currentCash?->name ?? '—' }}</span>
         <div class="join">
             <a class="btn join-item" href="{{ route('expenses.create') }}">+ Dépense</a>
             <a class="btn join-item" href="{{ route('contre-bons.create') }}">+ Recouvrement</a>
@@ -10,16 +14,24 @@
             <a class="btn join-item" href="{{ route('transfers.create') }}">+ Transfert</a>
         </div>
     </div>
+                {{-- <div>
+                    @php($u = Auth::user())
+                    <span class="badge badge-outline badge-lg h-auto align-middle" >Caisse: {{ $currentCash?->name ?? '—' }}</span>
+                </div> --}}
 
     <div class="card bg-base-100 shadow">
         <div class="card-body">
             <div class="flex items-center justify-between">
-                
-                <div>
-                    @php($u = Auth::user())
-                    <span class="badge badge-outline badge-lg h-auto align-middle" >Caisse: {{ $currentCash?->name ?? '—' }}</span>
-                </div>
-                <form method="get" action="" class="grid md:grid-cols-4 gap-4 items-end">
+                                
+                <form method="get" action="" class="grid md:grid-cols-1 gap-4 items-end">
+                    <!-- Recherche texte -->
+                    <div class="form-control">
+                        <x-input-label value="Recherche" />
+                        <x-text-input name="search" value="{{ request('search') }}" class="input input-bordered w-full max-w-xs" placeholder="Rechercher..."/>
+                    
+                    </div>
+                   <!-- Deuxième ligne avec les autres champs -->
+    <div class="grid md:grid-cols-4 gap-4 items-end"> 
                     <div class="form-control">
                         <x-input-label value="Type" />
                         <select name="type" class="select select-bordered w-full">
@@ -40,28 +52,30 @@
                     <div>
                         <button class="btn btn-primary w-full" type="submit">Filtrer</button>
                     </div>
+                </div>
+                    
                 </form>
             </div>
         </div>
     </div>
 
-    <div class="card bg-base-100 shadow">
-        <div class="card-body p-0">
-            <div class="overflow-x-auto">
-                <table class="table table-zebra">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Pièce</th>
-                            <th>Type</th>
-                            <th>Description</th>
-                            <th class="text-right">Entrée</th>
-                            <th class="text-right">Sortie</th>
-                            <th class="text-right">Solde</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                   {{--  @php($balance = 0) --}}
+    <!-- Tableau des mouvements -->
+    <div class="h-screen flex flex-col">
+    <div class="flex-1 overflow-hidden flex flex-col">
+        <div class="overflow-auto flex-1 bg-white shadow-md border border-gray-400">
+            <table class="w-full text-xs font-mono">
+                <thead class="sticky top-0 bg-gray-100 border-b border-gray-400">
+                    <tr class="text-xs uppercase tracking-wider text-gray-700">
+                        <th class="w-24 px-4 py-2 text-left border-r border-dashed border-gray-300">Date</th>
+                        <th class="w-32 px-4 py-2 text-left border-r border-dashed border-gray-300">Pièce</th>
+                        <th class="w-28 px-4 py-2 text-left border-r border-dashed border-gray-300">Type</th>
+                        <th class="w-auto px-4 py-2 text-left border-r border-dashed border-gray-300">Description</th>
+                        <th class="w-24 px-4 py-2 text-right border-r border-dashed border-gray-300">Entrée</th>
+                        <th class="w-24 px-4 py-2 text-right border-r border-dashed border-gray-300">Sortie</th>
+                        <th class="w-24 px-4 py-2 text-right">Solde</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-300">
                     @forelse($items as $m)
                         @php(
                             $isCredit = in_array($m->type, ['recette','transfert_credit']) || ($m->type === 'ajustement' && $m->montant >= 0)
@@ -72,57 +86,55 @@
                         @php(
                             $debit = $isCredit ? 0 : $m->montant
                         )
-                        {{-- @php($balance = $balance + $credit - $debit) --}}
                         <tr class="
-                @switch($m->type)
-                    @case('transfert_debit')  text-red-700 @break
-                    @case('transfert_credit') text-blue-700 @break
-                    @case('depense')          text-yellow-700 @break
-                    @case('recette')          text-green-700 @break
-                    @default                  text-gray-700
-                @endswitch
-                border-b">
-                            <td>{{ $m->date_mvt ? \Carbon\Carbon::parse($m->date_mvt)->format('d/m/Y') : '' }}</td>
-                            <td>
-                                @php(
-                                    $pieceNumero = null
-                                )
+                            @switch($m->type)
+                                @case('transfert_debit')  text-red-700 @break
+                                @case('transfert_credit') text-blue-700 @break
+                                @case('depense')          text-yellow-700 @break
+                                @case('recette')          text-green-700 @break
+                                @default                  text-gray-700
+                            @endswitch
+                        ">
+                            <td class="w-24 px-4 py-2 whitespace-nowrap border-r border-dashed border-gray-200">{{ $m->date_mvt ? \Carbon\Carbon::parse($m->date_mvt)->format('d/m/Y') : '' }}</td>
+                            <td class="w-32 px-4 py-2 border-r border-dashed border-gray-200">
+                                @php($pieceNumero = null)
                                 @if($m->source_type === \App\Models\Expense::class)
                                     @php($pieceNumero = $m->source->numero ?? null)
                                     @if($pieceNumero)
-                                        <span class="badge">Dépense #{{ $pieceNumero }}</span>
+                                        <span class="badge badge-sm">Dépense #{{ $pieceNumero }}</span>
                                     @endif
                                 @elseif($m->source_type === \App\Models\Transfer::class)
                                     @php($pieceNumero = $m->source->numero ?? null)
                                     @if($pieceNumero)
-                                        <span class="badge">Transfert #{{ $pieceNumero }}</span>
+                                        <span class="badge badge-sm">Transfert #{{ $pieceNumero }}</span>
                                     @endif
                                 @elseif($m->source_type === \App\Models\ContreBon::class)
                                     @php($pieceNumero = $m->source->numero ?? null)
                                     @if($pieceNumero)
-                                        <span class="badge">Contre‑bon #{{ $pieceNumero }}</span>
+                                        <span class="badge badge-sm">Contre‑bon #{{ $pieceNumero }}</span>
                                     @endif
                                 @endif
                             </td>
-                            <td><span class="badge badge-ghost capitalize">{{ str_replace('_',' ', $m->type) }}</span></td>
-                            <td>{{ $m->description }}</td>
-                            <td class="text-right">{{ $credit ? number_format($credit,2,',',' ') : '' }}</td>
-                            <td class="text-right">{{ $debit ? number_format($debit,2,',',' ') : '' }}</td>
-                            <td class="text-right">{{ number_format($m->balance,2,',',' ') }}</td>
-                           
+                            <td class="w-28 px-4 py-2 border-r border-dashed border-gray-200"><span class="badge badge-ghost badge-sm capitalize">{{ str_replace('_',' ', $m->type) }}</span></td>
+                            <td class="w-auto px-4 py-2 border-r border-dashed border-gray-200">{{ $m->description }}</td>
+                            <td class="w-24 px-4 py-2 text-right whitespace-nowrap border-r border-dashed border-gray-200">{{ $credit ? number_format($credit,2,',',' ') : '' }}</td>
+                            <td class="w-24 px-4 py-2 text-right whitespace-nowrap border-r border-dashed border-gray-200">{{ $debit ? number_format($debit,2,',',' ') : '' }}</td>
+                            <td class="w-24 px-4 py-2 text-right font-medium whitespace-nowrap">{{ number_format($m->balance,2,',',' ') }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center opacity-70">Aucun mouvement</td>
+                            <td colspan="7" class="px-4 py-8 text-center opacity-70">Aucun mouvement</td>
                         </tr>
                     @endforelse
-                    </tbody>
-                </table>
-            </div>
-            <div class="p-4">
-                {{ $items->links() }}
-            </div>
+                </tbody>
+            </table>
+        </div>
+        <div class="p-4 bg-white border-t">
+            {{ $items->links() }}
         </div>
     </div>
+</div>
+
+    <!-- End Table -->
 </div>
 @endsection
