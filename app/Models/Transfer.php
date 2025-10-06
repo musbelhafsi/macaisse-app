@@ -10,7 +10,7 @@ class Transfer extends Model
     use HasFactory;
 
     protected $fillable = [
-        'numero','from_cash_id','to_cash_id','montant','montant_recu','ecart','statut','emitted_at','validated_at','note'
+        'numero','from_cash_id','to_cash_id','montant','montant_recu','ecart','statut','emitted_at','validated_at','note','closed'
     ];
     public function fromCash(){
         return $this->belongsTo('App\Models\CashRegister', 'from_cash_id');

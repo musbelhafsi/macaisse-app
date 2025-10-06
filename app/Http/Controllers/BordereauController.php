@@ -123,35 +123,48 @@ class BordereauController extends Controller
         return $pdf->download('bordereau_envoi_'.$bordereau->numero.'.pdf');
     }
 
-    public function email(Request $request, Bordereau $bordereau)
-    {
-        $data = $request->validate([
-            'to' => 'required|email',
-            'cc' => 'nullable|email',
-            'subject' => 'nullable|string',
-            'message' => 'nullable|string',
+   public function email(Request $request, Bordereau $bordereau)
+{
+    $data = $request->validate([
+        'to' => 'required|email',
+        'cc' => 'nullable|email',
+        'subject' => 'nullable|string',
+        'message' => 'nullable|string',
+    ]);
+
+    // Préparation des données
+    $bordereau->load('lignes');
+    $contreBonIds = $bordereau->lignes->where('type','contre_bon')->pluck('reference_id');
+    $chequeLignes = $bordereau->lignes->where('type','cheque');
+    $chequeIds = $chequeLignes->pluck('reference_id')->filter();
+    $contreBons = ContreBon::whereIn('id', $contreBonIds)->get();
+    $cheques = Cheque::whereIn('id', $chequeIds)->get()->keyBy('id');
+    
+    // Génération du PDF
+    $pdf = Pdf::loadView('bordereaux.pdf', compact('bordereau','contreBons','cheques','chequeLignes'))->setPaper('A4');
+    $pdfData = $pdf->output();
+
+    // Message par défaut
+    $messageText = $data['message'] ?? "Bonjour,\n\nVeuillez trouver ci-joint le bordereau d'envoi n°{$bordereau->numero}.\n\nCordialement.";
+
+    // CORRECTION : Ajouter $pdfData dans le use()
+    Mail::raw($messageText, function ($message) use ($data, $pdfData, $bordereau) {
+        $message->to($data['to'])
+                ->subject($data['subject'] ?? ('Bordereau d\'envoi ' . $bordereau->numero));
+        
+        if (!empty($data['cc'])) {
+            $message->cc($data['cc']);
+        }
+        
+        $message->attachData($pdfData, 'bordereau_envoi_' . $bordereau->numero . '.pdf', [
+            'mime' => 'application/pdf'
         ]);
-        $bordereau->load('lignes');
-        $contreBonIds = $bordereau->lignes->where('type','contre_bon')->pluck('reference_id');
-        $chequeLignes = $bordereau->lignes->where('type','cheque');
-        $chequeIds = $chequeLignes->pluck('reference_id')->filter();
-        $contreBons = ContreBon::whereIn('id', $contreBonIds)->get();
-        $cheques = Cheque::whereIn('id', $chequeIds)->get()->keyBy('id');
-        $pdf = Pdf::loadView('bordereaux.pdf', compact('bordereau','contreBons','cheques','chequeLignes'))->setPaper('A4');
-        $pdfData = $pdf->output();
+    });
 
-        Mail::send([], [], function ($message) use ($data, $pdfData, $bordereau) {
-            $message->to($data['to']);
-            if (!empty($data['cc'])) $message->cc($data['cc']);
-            $message->subject($data['subject'] ?? ('Bordereau d\'envoi '.$bordereau->numero));
-            $message->setBody($data['message'] ?? 'Veuillez trouver en pièce jointe le bordereau d\'envoi.', 'text/plain');
-            $message->attachData($pdfData, 'bordereau_envoi_'.$bordereau->numero.'.pdf', [
-                'mime' => 'application/pdf'
-            ]);
-        });
+    return back()->with('success', 'Email envoyé avec succès.');
+}
 
-        return back()->with('ok', 'Email envoyé.');
-    }
+
 
     public function suggestNumero(string $date)
     {

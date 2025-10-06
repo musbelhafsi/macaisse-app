@@ -48,6 +48,10 @@ Route::middleware('auth')->group(function () {
 
     // Ecrans livreur (lecture seule)
     Route::get('mes-recouvrements', [\App\Http\Controllers\LivreurRecouvrementsController::class, 'index'])->name('livreurs.recouvrements')->middleware(['require.current.cash','role:livreur']);
+    Route::get('/livreur/recouvrements', [\App\Http\Controllers\LivreurRecouvrementsController::class, 'index'])
+    ->name('livreur.recouvrements')
+    ->middleware('auth');
+
 
     // Contre-bons (CRUD + actions)
     Route::resource('contre-bons', \App\Http\Controllers\ContreBonController::class)->only(['index','create','store','show','edit','update','destroy'])->middleware(['require.current.cash','role:admin|caissier']);
@@ -93,6 +97,15 @@ Route::middleware('auth')->group(function () {
     Route::resource('livreurs', \App\Http\Controllers\LivreurController::class)->middleware(['require.current.cash','role:admin|caissier']);
     // Mouvements (lecture seule)
     Route::get('movements', [\App\Http\Controllers\CashMovementController::class, 'index'])->name('movements.index')->middleware(['require.current.cash']);
+    // routes/web.php
+   Route::get('/movements/{cashMovement}/edit', [\App\Http\Controllers\CashMovementController::class, 'edit'])->name('movements.edit');
+   Route::put('/movements/{cashMovement}', [\App\Http\Controllers\CashMovementController::class, 'update'])->name('movements.update');
+// routes/web.php
+Route::get('/movements/{cashMovement}/annuler', [\App\Http\Controllers\CashMovementController::class, 'showAnnulationForm'])
+    ->name('movements.annuler.form');
+
+Route::post('/movements/{cashMovement}/annuler', [\App\Http\Controllers\CashMovementController::class, 'annuler'])
+    ->name('movements.annuler');
 
     // Transferts de caisse
     Route::middleware(['require.current.cash'])->group(function(){

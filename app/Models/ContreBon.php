@@ -11,7 +11,7 @@ class ContreBon extends Model
 
     protected $fillable = [
         'numero','company_id','livreur_id','date','montant','nombre_bons','ecart','note',
-        'validated_at','validated_by','validated_cash_id'
+        'validated_at','validated_by','validated_cash_id','closed'
     ];
 
     public function company() { return $this->belongsTo(Company::class); }

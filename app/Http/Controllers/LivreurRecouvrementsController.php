@@ -10,67 +10,53 @@ use Illuminate\Http\Request;
 class LivreurRecouvrementsController extends Controller
 {
     public function index(Request $request)
-    {
-        $user = Auth::user();
-        
-        $type = $request->get('type'); // 'espèce' ou 'chèque'
+{
+    $user = Auth::user();
+    $type = $request->get('type');
+
+    // Utiliser des query builders séparés au lieu de get() pour mieux paginer
+    $bonsQuery = RecouvrementBon::with(['client','company'])
+        ->where('livreur_id', $user->id);
+    
+    $chequesQuery = Cheque::with(['client','company'])
+        ->where('livreur_id', $user->id);
+
+    // Appliquer les filtres de date
+    if ($request->filled('from') && $request->filled('to')) {
+        $bonsQuery->whereBetween('date_recouvrement', [$request->from, $request->to]);
+        $chequesQuery->whereBetween('date_recouvrement', [$request->from, $request->to]);
+    }
 
     if ($type === 'espece') {
-        // 👉 Uniquement recouvrements en espèces
-        $recouvrements = RecouvrementBon::with(['client','company'])
-            ->where('livreur_id', $user->id)
-            ->when($request->filled('from') && $request->filled('to'),
-                fn($q) => $q->whereBetween('date_recouvrement', [$request->from, $request->to]))
-            ->get()
-            ->each(fn($bon) => $bon->type = 'espèce');
-
+        $allRecouvrements = $bonsQuery->orderBy('date_recouvrement', 'desc')->paginate(20);
+        $allRecouvrements->each(fn($bon) => $bon->type = 'espèce');
+        
     } elseif ($type === 'cheque') {
-        // 👉 Uniquement recouvrements par chèque
-        $recouvrements = Cheque::with(['client','company'])
-            ->where('livreur_id', $user->id)
-            ->when($request->filled('from') && $request->filled('to'),
-                fn($q) => $q->whereBetween('date_recouvrement', [$request->from, $request->to]))
-            ->get()
-            ->each(fn($cheque) => $cheque->type = 'chèque');
-
+        $allRecouvrements = $chequesQuery->orderBy('date_recouvrement', 'desc')->paginate(20);
+        $allRecouvrements->each(fn($cheque) => $cheque->type = 'chèque');
+        
     } else {
-
-        // Recouvrements en espèces
-    $bons = RecouvrementBon::with(['client','company'])
-        ->where('livreur_id', $user->id)
-       // ->when($request->filled('type'), fn($q) => $q->where('type', $request->type))
-        ->when($request->filled('from') && $request->filled('to'),
-            fn($q) => $q->whereBetween('date_recouvrement', [$request->from, $request->to]))
-        ->get()
-         ->each(fn($bon) => $bon->type = 'espèce');
-
-        // Recouvrements par chèque
-    $cheques = Cheque::with(['client','company'])
-        ->where('livreur_id', $user->id)
-        ->when($request->filled('from') && $request->filled('to'),
-            fn($q) => $q->whereBetween('date_recouvrement', [$request->from, $request->to]))
-        ->get()
-        ->each(fn($cheque) => $cheque->type = 'chèque');
-
-    // Fusionner les deux collections
-     $recouvrements = $bons->merge($cheques);
-    }
-    // Trier par date de recouvrement décroissante
-    $allRecouvrements = $recouvrements->sortByDesc('date_recouvrement')->values();   
-        // Pagination manuelle
+        // Pour "Tous", récupérer séparément et fusionner
+        $bons = $bonsQuery->get()->each(fn($bon) => $bon->type = 'espèce');
+        $cheques = $chequesQuery->get()->each(fn($cheque) => $cheque->type = 'chèque');
+        
+        $recouvrements = $bons->merge($cheques)->sortByDesc('date_recouvrement');
+        
+        // Pagination manuelle pour le cas "Tous"
         $perPage = 20;
         $currentPage = $request->input('page', 1);
-        $currentItems = $allRecouvrements->slice(($currentPage - 1) * $perPage, $perPage)->values();
+        $currentItems = $recouvrements->slice(($currentPage - 1) * $perPage, $perPage);
+        
         $allRecouvrements = new \Illuminate\Pagination\LengthAwarePaginator(
             $currentItems,
-            $allRecouvrements->count(),
+            $recouvrements->count(),
             $perPage,
             $currentPage,
             ['path' => $request->url(), 'query' => $request->query()]
-        );  
-      //  dd($allRecouvrements->toArray());
-
-
-    return view('livreurs.recouvrements', compact('allRecouvrements')); 
+        );
     }
+
+    return view('livreurs.recouvrements', compact('allRecouvrements'));
+}
+
 }

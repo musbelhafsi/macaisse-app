@@ -64,7 +64,7 @@ class ContreBonController extends Controller
 
     public function update(Request $request, ContreBon $contreBon)
     {
-        $this->ensureNotValidated($contreBon);
+        abort_if($contreBon->closed, 403, 'Contre‑bon fermé.');
         $data = $request->validate([
             'numero' => 'required|string',
             'date' => 'required|date',
@@ -74,12 +74,16 @@ class ContreBonController extends Controller
         $contreBon->fill($data)->save();
         // Recalcule l'écart après modification du montant saisi
         $this->refreshTotals($contreBon);
+        // Si validé, mettre à jour le mouvement de caisse
+        if ($contreBon->validated_at) {
+            $this->updateCashMovement($contreBon);
+        }
         return back()->with('ok', 'Contre‑bon mis à jour.');
     }
 
     public function destroy(ContreBon $contreBon)
     {
-        $this->ensureNotValidated($contreBon);
+        $this->ensureNotClosed($contreBon);
         DB::transaction(function () use ($contreBon) {
             RecouvrementBon::where('contre_bon_id', $contreBon->id)->update(['contre_bon_id' => null]);
             $contreBon->delete();
@@ -89,7 +93,7 @@ class ContreBonController extends Controller
 
     public function addBon(Request $request, ContreBon $contreBon)
     {
-        $this->ensureNotValidated($contreBon);
+        $this->ensureNotClosed($contreBon);
         $data = $request->validate([
             'numero' => 'required|string',
             'client_id' => 'required|exists:clients,id',
@@ -103,21 +107,30 @@ class ContreBonController extends Controller
         $data['contre_bon_id'] = $contreBon->id;
         RecouvrementBon::create($data);
         $this->refreshTotals($contreBon);
+        // Si validé, mettre à jour le mouvement
+        if ($contreBon->validated_at) {
+            $this->updateCashMovement($contreBon);
+        }
         return back()->with('ok', 'Ligne ajoutée.');
     }
 
     public function removeBon(ContreBon $contreBon, RecouvrementBon $bon)
     {
-        $this->ensureNotValidated($contreBon);
+        $this->ensureNotClosed($contreBon);
         abort_unless($bon->contre_bon_id === $contreBon->id, 404);
         $bon->delete();
         $this->refreshTotals($contreBon);
+        // Si validé, mettre à jour le mouvement
+        if ($contreBon->validated_at) {
+            $this->updateCashMovement($contreBon);
+        }
         return back()->with('ok', 'Ligne supprimée.');
     }
 
     public function validateContreBon(Request $request, ContreBon $contreBon)
     {
-        $this->ensureNotValidated($contreBon);
+        abort_if($contreBon->closed, 403, 'Contre‑bon fermé.');
+        abort_if(!is_null($contreBon->validated_at), 403, 'Contre‑bon déjà validé.');
         $cashId = Auth::user()?->current_cash_id;
         if (!$cashId) {
             return back()->withErrors(['cash' => "Aucune caisse courante sélectionnée."]);
@@ -176,9 +189,34 @@ class ContreBonController extends Controller
         $contreBon->save();
     }
 
-    private function ensureNotValidated(ContreBon $contreBon): void
+    private function ensureNotClosed(ContreBon $contreBon): void
     {
-        abort_if(!is_null($contreBon->validated_at), 403, 'Contre‑bon déjà validé.');
+        abort_if($contreBon->closed, 403, 'Contre‑bon fermé.');
+    }
+
+    private function updateCashMovement(ContreBon $contreBon): void
+    {
+        // Supprimer l'ancien mouvement
+        CashMovement::where('source_type', ContreBon::class)
+            ->where('source_id', $contreBon->id)
+            ->delete();
+
+        // Recréer avec les nouvelles valeurs
+        $totalEspeces = RecouvrementBon::where('contre_bon_id', $contreBon->id)
+            ->where('type', 'espece')
+            ->sum('montant');
+
+        if ($totalEspeces > 0) {
+            CashMovement::create([
+                'cash_id' => $contreBon->validated_cash_id,
+                'type' => 'recette',
+                'montant' => $totalEspeces,
+                'source_type' => ContreBon::class,
+                'source_id' => $contreBon->id,
+                'description' => trim(($contreBon->livreur?->name ?? '') . ' ' . ($contreBon->company?->code ?? '')),
+                'date_mvt' => Carbon::parse($contreBon->date),
+            ]);
+        }
     }
 
     // Suggestion du prochain numéro selon société/livreur/année

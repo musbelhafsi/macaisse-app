@@ -10,6 +10,6 @@ class Expense extends Model
     use HasFactory;
 
     protected $fillable = [
-        'cash_id','date','numero','libelle','montant','note'
+        'cash_id','date','numero','libelle','montant','note','closed'
     ];
 }
